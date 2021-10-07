@@ -75,6 +75,8 @@ pub const Header = extern struct {
     ar_mode: [8]u8,
     ar_size: [10]u8,
     ar_fmag: [2]u8,
+
+    pub const format_string = "{s: <16}{: <12}{: <6}{: <6}{o: <8}{: <10}`\n";
 };
 
 pub const Modifiers = extern struct {
@@ -214,7 +216,11 @@ pub fn finalize(self: *Archive, allocator: *Allocator) !void {
                     if (symbol_table.items.len % 2 != 0)
                         try symbol_table.append(0);
 
-                    try writer.print("/{s}{: <10}`\n", .{ " " ** 47, symbol_table.items.len + (symbol_offset.items.len * 4) + 4 });
+                    try writer.print(
+                        Header.format_string,
+                        .{ "/", 0, 0, 0, 0, symbol_table.items.len + (symbol_offset.items.len * 4) + 4 },
+                    );
+
                     try writer.writeIntBig(u32, symbol_count);
 
                     for (symbol_offset.items) |off| {
@@ -256,7 +262,7 @@ pub fn finalize(self: *Archive, allocator: *Allocator) !void {
         var headerBuffer: [@sizeOf(Header)]u8 = undefined;
         _ = try std.fmt.bufPrint(
             &headerBuffer,
-            "{s: <16}{: <12}{: <6}{: <6}{o: <8}{: <10}`\n",
+            Header.format_string,
             .{ &header_names[index], 0, 0, 0, file.contents.mode, file.contents.length },
         );
 
